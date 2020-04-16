@@ -1,0 +1,231 @@
+### Infant Birth Weight Data
+
+
+```{r dataprep, echo=TRUE,warning=FALSE,message=FALSE}
+infant<-read.csv("Infants.csv",header=TRUE)
+infant <- subset(infant, birthwt < 1750)
+infant <- infant[,-c(1:2)]
+infant$toxF <- factor(infant$toxemia, labels=c("No","Yes"))
+infant <- infant[,-c(4)]
+str(infant)
+```
+
+
+### Instructions:
+
+Explaining and documenting your work carefully is usually worth more points than the answers themselves.  Make sure you thoroughly answer and support your answers.
+
+There are several places in the exam where hypothesis tests and confidence intervals are needed.  You will need to use your knowledge to decide which commands and output are relevant for the questions asked.  You will need to review the text, examples, old homeworks, notes, and videos to review the proper usage of commands.  If a question requires a test or confidence interval, you will be expected to state formal hypotheses, state test statistic values, pvalues, and make full conclusions with all steps as you have done in homeworks.  Confidence interval results are expected to be reported with full conclusions based on a provided confidence interval - all steps properly argued.
+
+You are not allowed to alter, transform, use splines, polynomials, for any variable.  You are not to transform or alter the primary response variable birthwt.  The other variables available to you are toxF, gest_wks, and mage.
+
+* toxF:  toxemia, Yes means the mom experienced toxemia during the pregnancy, level No means the mom did not experience toxemia during the pregnancy.
+
+* gest_wks:  the number of weeks of gestation for the baby's birth.
+
+*  mage:  mother's age in years at time of the birth.
+
+*  birthwt:  baby birthweight measured in grams.  The primary response variable.
+
+
+## You are permitted to add code blocks to this file below this point !!
+
+### Take Home Exam Problems
+
+If additional code is needed for these problems, add new code blocks under each problem that are relevant for that problem.  You will get points deducted for code that is separated from where it is needed.
+
+
+a) Using a model with Wilkinson-Rogers Notation birthwt ~ toxF, is there evidence that average birthweights differ between moms with toxemia and moms that don't have toxemia?  Perform a hypothesis test as the basis for your answer (all formal structure present).  Discuss and explain.
+
+```{r}
+modela<- lm(birthwt ~ toxF,data=infant)
+summary(modela)
+```
+
+Answer:
+
+- NH: $\beta_{1} = 0$, vs AH: $\beta_{1} \neq 0$
+- T-stat: -0.03
+- P-value: 0.976
+- Conclusion: The $\beta_{1}$ coefficient gives us the estimated difference in average birthweights of moms with toxemia and moms without toxemia. The big p-value (p >0.05) suggests that the data would likely be consistent if the average birthweights did not depend with moms with toxemia and moms without toxemia. There is no evidence to doubt the NH. There is little evidence for AH that the average birthweights differs between moms with toxemia and moms without toxemia. We can conclude that there is no evidence that average birthweights differ between mom with toxemia and mom without toxemia. 
+
+b) Using a model with Wilkinson-Rogers Notation birthwt ~ toxF + gest_wks, is there evidence that average birthweights differ between moms with toxemia and moms that don't have toxemia, after adjusting for gestation length?  Perform a hypothesis test as the basis for your answer (all formal structure present).  Discuss and explain.
+
+```{r}
+modelb<- lm(birthwt ~ toxF + gest_wks, data=infant)
+summary(modelb)
+
+```
+Answer:
+  
+  - NH: $\beta_{1} = 0$, vs AH: $\beta_{1} \neq 0$
+  - T-stat: -4.238
+- P-value: 5.22e-05
+- Conclusion: The $\beta_{1}$ coefficient gives us the estimated difference in average birthweights of mom with toxemia and moms without toxemia after adjusting for gestation length. The small p-value (p <0.05) suggests that the data would unlikely to be consistent if the average birthweights did not depend on moms with toxemia and moms without toxemia. There is evidence to doubt the NH. There is evidence for AH model that average birthweigths does depend on moms with toxemia and moms without toxemia after adjusting for gestation length. We can conclude that the moms with toxemia has an estimated average birthweight of 225.7g higher than moms without toxemia, holding the gestation length constant.
+
+
+c)  How many weeks gestation do births average for moms with toxemia?  How many weeks gestation do births average for moms without toxemia?  Do the gestation lengths significantly differ between moms with and without toxemia?  Discuss and explain.
+
+
+```{r}
+library(emmeans)
+modelc<-lm(gest_wks~toxF,data=infant)
+summary(modelc)
+(emmeans(modelc,"toxF"))
+pairs(emmeans(modelc,"toxF"))
+```
+
+Answer: Average gestation weeks for moms with toxemia = 31 weeks.
+Average gestation weeks for moms without toxemia = 28 weeks.
+
+NH: $\beta_{1}-\beta_{0} = 0$, vs AH: $\beta_{1}-\beta_{0} \neq 0$
+  
+  The emmeans package in R uses the group means $\mu$ instead of $\beta$ for a linear model. This means the comparison coefficients are defined in terms of means. When we compared the groups of moms with toxemia (Yes) and moms without toxemia (No), the estimated average difference in gestation lengths between groups is 2.6 weeks or we can say that the moms with toxemia is has 2.6 higher estimated average gestation weeks than moms without toxemia.
+However, with a very small p-value (p <0.05) we can suggest there is enough evidence to doubt the NH. There is evidence for AH that the estimated average difference between two groups is statistically significant.
+
+d) Use your answers to parts a), b), and c) and at least one additional graphical display (not an effect plot) to explain how toxemia is associated with birth weights. Do the models in a) and b) give the same inference about the effect of toxemia?  Explain how and why the inferences are the same or different.
+
+Answer: 
+  Modela represents a negative relationship between moms having toxemia with estimated average birthweights. The beta coefficient $\beta_{1}$ estimates that moms with toxemia would have an estimated average birhtweight of 2.013g less than moms without toxemia. The difference in birthweight is statistically insignificant.
+Modelb represents a negative relationship between moms having toxemia with estimated average birthweights. The beta coefficient $\beta_{1}$ estimates that moms with toxemia would have an estimated average birthweight of 225.6g less than moms without toxemia holding gestation constant. The difference in birthweight is statistically significant.
+Modelc represents a positive relationship between gestation and toxemia. The beta coeffiecient $\beta_{1}$ estimates that moms with toxemia has estimated average 2.62 weeks higher than moms without toxemia. The difference in gestation is statistically significant.
+From modelb we can also tell that gestation has positive association with estimated average birthweights holding moms toxemia constant. The reason toxemia has insignificant effect on birthweight is because toxemia barely explains the variation in birthweight, meaning it's not a ideal predictor for the model. On the other hand in modelb, the reason toxemia is significant because of gestation explains significant amount of variation in birthweight which makes toxemia look significant in the model. In modelc, toxemia has significant effect on gestation. Thus we can tell, gestation has significant effect on birthweight.
+
+```{r}
+library(ggplot2)
+data(infant)
+ggplot(infant, aes(x = toxF, y =birthwt)) + geom_boxplot() + coord_flip()
+```
+
+The boxplot shows us the relationship between birthwt and moms with and without toxemia. Moms with toxemia generally have higher median and spread of the birthwt in comparison with moms without toxemia. 
+
+
+e) Using a model with Wilkinson-Rogers Notation birthwt ~ toxF*gest_wks, 
+compute the difference in average birthweights for toxemia Yes, vs toxemia No, births at gestation = 29 weeks.  Are the average birthweights significantly different?
+
+```{r}
+modele<-lm(birthwt~toxF*gest_wks,data=infant)
+#summary(modele)
+emmeans(modele,pairwise~toxF,at=list(gest_wks=29))
+```
+
+Answer: 
+- NH: $\beta_{01}=\beta_{11} = 0$, vs AH: $\beta_{01}=\beta_{11} \neq 0$
+- T-stat: 4.384
+- P-value: 0.0001
+- Conclusion: The small p-value (p <0.05) suggests that the data would be inconsistent if average birthweights did not depend on moms with tomexia and moms without toxemia. There is evidence to doubt the NH. There is evidence for AH that the estimated average birthweights differ between moms with toxemia and moms without toxemia. Thus, we can canclude that the moms with no toxemia have higher estimated average birthweight of 263.8g compared to moms with toxemia at gestation week = 29.
+
+
+f) Using a model with Wilkinson-Rogers Notation birthwt ~ toxF*gest_wks - consider births for mothers with toxemia. If we consider an additional two weeks of gestation, is there evidence that the additional birthweight will differ from 100 grams?  Explain.  Use a hypothesis test or confidence interval as the basis for your solution.
+
+```{r}
+library(rms)
+dd<- datadist(infant)
+options(datadist="dd")
+modelf<-ols(birthwt~toxF*gest_wks,data=infant,x=T,y=T)
+summary(modelf,toxF="Yes",gest_wks=c(8,9,10))
+
+```
+
+(79.341+ 28.362)*2 = 215g
+
+Answer: The confidence interval for the estimated avrage birthweight is (290,141). The estimated average birthweight after additional 2 weeks of gestation is 215g which is significantly different from 100g. Moreover, the lower bound of the confidence interval is at 141g suggesting that the point would be an outlier providing enough evidence to say that the estimated average birthweight differs from 100g.
+
+g) Using a model with Wilkinson-Rogers Notation birthwt ~ toxF+gest_wks+mage.  Consider a birth with mother of average age, at 29 weeks of gestation, without toxemia.  Should a baby weighing 710 grams be considered unusual?  Why or why not?
+
+```{r}
+modelg<-lm(birthwt~toxF+gest_wks+mage,data=infant)
+summary(modelg)
+predict(modelg,newdata=data.frame(gest_wks=29,toxF="No",mage=28),interval = "prediction")
+#emmeans(modelg,pairwise ~ toxF, at=list(gest_wks=29))
+
+```
+
+Answer: The estimated average birthweight is 1153g when the mother is at average age with gestation week at 29. The confidence interval is (1546,761) which means the all the plausible values are positive. A baby weighing 710g would be an outlier value, as the estimated average birthweight at gest_wks=29 and mage=28 is below the lower bound.
+
+These models are needed for problem h) - i).
+```{r bwpi}
+m3<- lm(birthwt ~ toxF:gest_wks, data=infant)
+m2<- lm(birthwt ~ toxF + gest_wks, data=infant)
+m4<- lm(birthwt ~ gest_wks, data=infant)
+m1<- lm(birthwt ~ toxF*gest_wks , data=infant)
+```
+
+
+h) Choose between models m1,m2,m3,m4 (defined below) to find the best model, justify your decision with plots and hypothesis tests.  Be thorough and explain your steps and reasoning used to obtain your best model.  
+
+
+
+
+```{r}
+anova(m4,m1)
+
+residualPlots(m4,smooth=list(smoother=loessLine),quadratic=FALSE,groups=toxF, main= "Residual plots for m4")
+residualPlots(m1,smooth=list(smoother=loessLine),quadratic=FALSE,groups=toxF, main= "Residual plots for m1")
+
+anova(m3,m1)
+
+residualPlots(m3,smooth=list(smoother=loessLine),quadratic=FALSE,groups=toxF, main= "Residual plots for m3")
+
+anova(m2,m1)
+
+residualPlots(m2,smooth=list(smoother=loessLine),quadratic=FALSE,groups=toxF, main= "Residual plots for m2")
+
+anova(m4,m2)
+
+anova(m4,m3)
+
+```
+
+Hypothesis: Model 4 vs Model 1
+
+- NH: gest_wks vs AH: toxF + gest_wks + toxF:gest_wks
+- F-stat: 9.9559 
+- P-value: 0.0001198
+- Conclusion: The small p-value (p <0.05) suggests that our data would be inconsistent if the birthweight did not depend on toxF:gest_wks and toxF. There is evidence to doubt the NH and evidence for the AH. This suggests that the birthweight depends on toxF and the interaction and would be better at explaining the variation in birthweight. Hence, we can conclude model 1 would be a better fit.
+
+Hypotheis: Model 3 vs Model 1
+
+- NH: toxF:gest_wks vs AH: toxF + gest_wks + toxF:gest_wks
+- F-stat: 2.8483
+- P-value: 0.09478
+- Conclusion: The big p-value (p >0.05) suggests that our data is consistent if the birthweight did not depend on toxF and gest_wks. There is no evidence to doubt the NH and no evidence to support for the AH. Therefore, there is no evidence to conclude that toxF and gest_wks help explain the variation in birthweight. Hence, we can conclude that model3 would be a better fit. 
+
+Hypthosis: Model 2 vs Model 1
+
+- NH: toxF + gest_wks vs AH: toxF + gest_wks + toxF:gest_wks
+- F-stat: 1.8001
+- P-value: 0.1829
+- Conclusion:  The p-value (p >0,05) suggests that our data is consistent if the birthweight did not depend on toxF:gest_wks. There is no evidence to doubt the NH and no evidence to support the AH. Therefore, there is no evidence to conclude that toxF:gest_wks help explain the variation in birthweight. Hence, we can conclude that model2 would be a better fit. 
+
+Hypothesis: Model 4 vs Model 2
+
+- NH: gest_wks vs AH: toxF + gest_Wks
+- F-stat: 17.96
+- P-value: 5.224e-05
+- Conclusion: The small the p-value (p <0.05) suggests that our data is inconsistent if birthweight did not depend on toxF. There is evidence to doubt the null hypothesis and evidence to support the alternative hypothesis. This suggest that the birthweight depends on toxF and helps explain the variation in birthweight. Hence, we can conclude that model2 would be a better fit. 
+
+Hypothesis: Model 4 vs Model 2
+
+- NH: gest_wks vs AH: toxF:gest_wks
+- F-stat: 16.738
+- P-value: 8.996e-05
+- Conclusion: The small p-value (p< 0.05) suggests that our data is inconsistent if birthweight did not depend on toxF:gest_wks. There is evidence to doubt the NH and evidence to support the AH. This suggest that the birthweight depends on toxF:gest_wks and it helps explain the variation in birthweight. Hence, we can conclude that model2 would be a better fit. 
+
+From model comparison, we can tell that model 2 and model 3 are better fit amongs all the other ones. However, we could not compare them directly as these models are not nested subsets of each other. The R-squared values would be a good element to compare the models as they explain how well the predictors explain the variation of the response. Model2 has R-squared= 0.504 , which indicates 50.4% of the variation in birthweight is explained by the toxF and gest_wks. Model3 has R-squared= 0.498, which indicates 49.8% of the variation in birthweight is explained by toxF. Model 2 and model 3 have very similar R-squared value, so I would prefer model 3 as it is a simpler model.
+
+
+
+
+i) Describe what your best model says about birthweights, toxemia, and gestation length.  Give a summary of your findings.  How well does your final, best, model fit the data?  Did you find or observe any problems with your model?  Document and comment on your examination of the model.
+
+
+```{r}
+summary(m2)
+#residualPlot(m2,smooth=list(smoother=loessLine),quadratic=FALSE,col=rgb(0,130,0,200,maxColorValue=250),ask=FALSE,main="Residual plot of birthweight with toxF", groups="toxF")
+residualPlots(m2,smooth=list(smoother=loessLine),quadratic=FALSE,groups=toxF)
+
+```
+
+Model 2 is most likely the best model. Birthweights have positive correlation with number of gestation week, but they have negative correlation with moms with toxemia. The estimate slope for gestation week is 85.390 shows a strong positive correlation with birthweight, the estimate slope for moms with toxemia is -225.652 that shows stronger negative correlation with birthweight. This model does not have an interaction term between toxF and gest_wks which shows no evidence that the term was helpful in explaining the variation in birthweight. Model 2 has R-squared = 0.5038 that indicates that 50.38% of the variation in birthweight has been explained by the predictors (toxemia, gestation week) in the model. The residual plot forms a non linear concave down curve for both groups (moms with toxemia and moms without toxemia) suggesting a better fit for a non-linear model.
+However, all the models have flaws as we they have concave down curve from the residual plot. This suggests all the models would require a better fit.
